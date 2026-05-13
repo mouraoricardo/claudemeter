@@ -40,7 +40,7 @@ No Python installation needed.
 ### Windows / macOS / Linux (Python required)
 
 ```bash
-git clone https://github.com/your-username/claudemeter
+git clone https://github.com/mouraoricardo/claudemeter
 cd claudemeter
 pip install -r requirements.txt
 python server.py
