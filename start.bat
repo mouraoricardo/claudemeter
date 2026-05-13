@@ -31,6 +31,8 @@ if errorlevel 1 (
 :: ── 3. Skip launch if server already running on port 7842 ────────────────────
 netstat -an 2>nul | findstr /C:":7842 " >nul 2>&1
 if not errorlevel 1 (
+    echo ClaudeMeter is already running on port 7842.
+    echo Opening dashboard...
     goto :open
 )
 

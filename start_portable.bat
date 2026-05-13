@@ -3,19 +3,42 @@ setlocal EnableDelayedExpansion
 title ClaudeMeter
 cd /d "%~dp0"
 
-:: ── Skip if server already running on port 7842 ───────────────────────────────
+:: ── Check if already running on port 7842 ─────────────────────────────────
 netstat -an 2>nul | findstr /C:":7842 " >nul 2>&1
-if not errorlevel 1 goto :open
+if not errorlevel 1 (
+    echo ClaudeMeter is already running on port 7842.
+    echo Opening dashboard...
+    goto :open
+)
 
-:: ── Launch server using the bundled Python (no console window) ───────────────
+:: ── Sanity check: verify packages are present ─────────────────────────────
+"%~dp0python\python.exe" -c "import flask, requests" >nul 2>&1
+if errorlevel 1 (
+    echo.
+    echo [ERROR] Required packages not found in lib\
+    echo Please run build.bat again to reinstall.
+    echo.
+    pause & exit /b 1
+)
+
+:: ── Launch server in background (no console window) ───────────────────────
 set "PYTHONPATH=%~dp0lib"
 start "" /B "%~dp0python\pythonw.exe" "%~dp0server.py"
 
-:: ── Wait up to 15 s for the server to accept connections ─────────────────────
+:: ── Wait up to 15s for server to accept connections ───────────────────────
 set /a T=0
 :wait
 if !T! geq 15 (
+    echo.
     echo [ERROR] Server did not start within 15 seconds.
+    echo.
+    echo Run this to see the error:
+    echo   "%~dp0python\python.exe" "%~dp0server.py"
+    echo.
+    echo Common causes:
+    echo   - Missing credentials: %%USERPROFILE%%\.claude\.credentials.json
+    echo   - Port 7842 was just freed and is still in TIME_WAIT state
+    echo.
     pause & exit /b 1
 )
 timeout /t 1 /nobreak >nul
@@ -25,19 +48,8 @@ if not errorlevel 1 goto :open
 set /a T+=1
 goto :wait
 
-:: ── Open dashboard in default browser ────────────────────────────────────────
+:: ── Open dashboard ─────────────────────────────────────────────────────────
 :open
 start http://localhost:7842
-
-:: ── System tray balloon notification (best-effort, silent on failure) ─────────
-set "PS1=%TEMP%\cm_notify_%RANDOM%.ps1"
-echo Add-Type -AssemblyName System.Windows.Forms                                       > "%PS1%"
-echo $n = New-Object System.Windows.Forms.NotifyIcon                                  >> "%PS1%"
-echo $n.Icon = [System.Drawing.SystemIcons]::Application                              >> "%PS1%"
-echo $n.Visible = $true                                                                >> "%PS1%"
-echo $n.ShowBalloonTip(3000,'ClaudeMeter','Claude Usage Monitor started',[System.Windows.Forms.ToolTipIcon]::Info) >> "%PS1%"
-echo Start-Sleep -Milliseconds 4500                                                    >> "%PS1%"
-echo $n.Dispose()                                                                      >> "%PS1%"
-start "" /B powershell -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "%PS1%"
 
 endlocal

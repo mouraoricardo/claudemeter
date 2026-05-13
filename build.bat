@@ -52,7 +52,7 @@ del /q "%GETPIP%"
 
 :: ── [4/5] Install runtime dependencies into lib\ ────────────────────────────
 echo [4/5] Installing Flask and requests into lib\...
-"%PYDIR%\python.exe" -m pip install flask requests ^
+"%PYDIR%\python.exe" -m pip install flask requests plyer ^
     --target="%LIBDIR%" ^
     --quiet ^
     --no-warn-script-location
