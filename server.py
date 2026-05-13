@@ -1,4 +1,6 @@
 import json
+import socket
+import sys
 import threading
 import time
 from collections import deque
@@ -176,6 +178,18 @@ def api_status():
 
 
 if __name__ == "__main__":
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as _s:
+        if _s.connect_ex(("127.0.0.1", 7842)) == 0:
+            print("ERROR: Port 7842 is already in use — another ClaudeMeter instance may be running.")
+            print()
+            if sys.platform == "win32":
+                print("  To find it:  netstat -ano | findstr :7842")
+                print("  To stop it:  taskkill /PID <pid> /F")
+            else:
+                print("  To find it:  lsof -ti:7842")
+                print("  To stop it:  kill $(lsof -ti:7842)")
+            sys.exit(1)
+
     t = threading.Thread(target=background_poller, daemon=True)
     t.start()
     app.run(host="0.0.0.0", port=7842, debug=False)
