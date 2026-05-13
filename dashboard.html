@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClaudeMeter</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0d1117;
+      --surface: #161b22;
+      --border:  #30363d;
+      --text:    #e6edf3;
+      --muted:   #8b949e;
+      --track:   #21262d;
+      --green:   #3fb950;
+      --amber:   #d29922;
+      --red:     #f85149;
+      --blue:    #58a6ff;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ─────────────────────────────────────── */
+    header {
+      flex-shrink: 0;
+      padding: 14px 28px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    header h1 { font-size: 17px; font-weight: 700; letter-spacing: -.3px; }
+    header .sub { font-size: 12px; color: var(--muted); }
+
+    /* ── Main ────────────────────────────────────────── */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      padding: 22px 28px;
+      min-height: 0;
+    }
+
+    /* ── Card ────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 24px 18px;
+      flex: 1;
+      max-width: 345px;
+      min-width: 230px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .card-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      align-self: flex-start;
+      margin-bottom: 14px;
+    }
+
+    .gauge-wrap {
+      width: 175px;
+      height: 175px;
+      flex-shrink: 0;
+    }
+
+    /* ── Reset section ───────────────────────────────── */
+    .reset-section { margin-top: 14px; text-align: center; }
+    .reset-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .countdown {
+      font-size: 20px;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: .5px;
+      transition: color .4s;
+    }
+
+    /* ── Sparkline ───────────────────────────────────── */
+    .spark-section {
+      margin-top: 14px;
+      align-self: stretch;
+    }
+    .spark-label {
+      display: block;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+      opacity: .7;
+    }
+    .spark-wrap {
+      height: 44px;
+      width: 100%;
+    }
+
+    /* ── Error overlay ───────────────────────────────── */
+    .card-err {
+      position: absolute;
+      inset: 0;
+      background: rgba(13,17,23,.92);
+      border-radius: 14px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-align: center;
+      padding: 20px;
+    }
+    .card-err.show { display: flex; }
+    .card-err .ei { font-size: 30px; line-height: 1; }
+    .card-err .et { font-size: 13px; font-weight: 600; color: var(--red); }
+    .card-err .ed { font-size: 12px; color: var(--muted); max-width: 240px; line-height: 1.45; }
+
+    /* ── Status bar ──────────────────────────────────── */
+    footer {
+      flex-shrink: 0;
+      border-top: 1px solid var(--border);
+      padding: 0 28px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+      flex-shrink: 0;
+      transition: background .3s;
+    }
+    .dot.ok    { background: var(--green); }
+    .dot.error { background: var(--red); }
+    .dot.busy  { background: var(--amber); }
+
+    footer .spacer  { flex: 1; }
+    footer .divider { color: var(--border); }
+
+    .btn-refresh {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-refresh:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); }
+    .btn-refresh:disabled { opacity: .35; cursor: default; }
+
+    .spinner {
+      width: 12px; height: 12px;
+      border: 2px solid var(--border);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .spinner.on { animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Responsive ──────────────────────────────────── */
+    @media (max-width: 560px) {
+      body { height: auto; overflow: auto; }
+      main { flex-direction: column; }
+      .card { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>ClaudeMeter</h1>
+  <span class="sub">Claude Code API usage monitor</span>
+</header>
+
+<main>
+  <!-- 5h card -->
+  <div class="card">
+    <div class="card-title">5h Session</div>
+    <div class="gauge-wrap"><canvas id="c5h"></canvas></div>
+    <div class="reset-section">
+      <div class="reset-label">Resets in</div>
+      <div class="countdown" id="cd5h">—</div>
+    </div>
+    <div class="spark-section">
+      <span class="spark-label">1h trend</span>
+      <div class="spark-wrap"><canvas id="s5h"></canvas></div>
+    </div>
+    <div class="card-err" id="e5h">
+      <div class="ei">⚠</div>
+      <div class="et" id="e5h-t">No data</div>
+      <div class="ed" id="e5h-d"></div>
+    </div>
+  </div>
+
+  <!-- 7d card -->
+  <div class="card">
+    <div class="card-title">7 Day</div>
+    <div class="gauge-wrap"><canvas id="c7d"></canvas></div>
+    <div class="reset-section">
+      <div class="reset-label">Resets in</div>
+      <div class="countdown" id="cd7d">—</div>
+    </div>
+    <div class="spark-section">
+      <span class="spark-label">1h trend</span>
+      <div class="spark-wrap"><canvas id="s7d"></canvas></div>
+    </div>
+    <div class="card-err" id="e7d">
+      <div class="ei">⚠</div>
+      <div class="et" id="e7d-t">No data</div>
+      <div class="ed" id="e7d-d"></div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="dot" id="sdot"></div>
+  <span id="stxt">Connecting…</span>
+  <button class="btn-refresh" id="refresh-btn" onclick="manualRefresh()">Refresh now</button>
+  <span class="spacer"></span>
+  <span id="sago"></span>
+  <span class="divider">|</span>
+  <div class="spinner" id="spin"></div>
+  <span id="snext">—</span>
+</footer>
+
+<script>
+const API  = '';
+const POLL = 60;
+
+/* ── Chart.js center-text plugin ── */
+Chart.register({
+  id: 'centre',
+  afterDraw(chart) {
+    const a = chart.chartArea;
+    if (!a) return;
+    const { ctx } = chart;
+    const cx = (a.left + a.right) / 2;
+    const cy = (a.top  + a.bottom) / 2;
+    const { big = '—', small = '— / —' } = chart.options.plugins.centre || {};
+    ctx.save();
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font      = 'bold 26px -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif';
+    ctx.fillStyle = '#e6edf3';
+    ctx.fillText(big, cx, cy - 12);
+    ctx.font      = '12px -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif';
+    ctx.fillStyle = '#8b949e';
+    ctx.fillText(small, cx, cy + 14);
+    ctx.restore();
+  }
+});
+
+/* ── Helpers ── */
+const $     = id => document.getElementById(id);
+const toNum = v  => { const n = parseFloat(v); return isNaN(n) ? null : n; };
+
+function abbr(n) {
+  if (n === null) return '—';
+  const a = Math.abs(n);
+  if (a >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (a >= 1e3) return (n / 1e3).toFixed(0)  + 'K';
+  return String(Math.round(n));
+}
+
+function arcColor(pct) {
+  if (pct === null) return '#30363d';
+  if (pct < 50)    return '#3fb950';
+  if (pct < 80)    return '#d29922';
+  return '#f85149';
+}
+
+function arcColorAlpha(pct, a = 0.12) {
+  const c = arcColor(pct);
+  const r = parseInt(c.slice(1, 3), 16);
+  const g = parseInt(c.slice(3, 5), 16);
+  const b = parseInt(c.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function fmtCountdown(ts) {
+  if (!ts) return '—';
+  const dt = /^\d+$/.test(String(ts)) ? new Date(Number(ts) * 1000) : new Date(ts);
+  const ms = Math.max(0, dt.getTime() - Date.now());
+  if (ms === 0) return 'Resetting…';
+  const s = Math.floor(ms / 1000);
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m`;
+  return `${s}s`;
+}
+
+function fetchT(url, ms = 8000) {
+  return new Promise((resolve, reject) => {
+    const ctrl = new AbortController();
+    const tid  = setTimeout(() => ctrl.abort(), ms);
+    fetch(url, { signal: ctrl.signal })
+      .then(r  => { clearTimeout(tid); resolve(r); })
+      .catch(e => { clearTimeout(tid); reject(e);  });
+  });
+}
+
+/* ── Gauge charts ── */
+function mkGauge(id) {
+  return new Chart($(id).getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [0, 100],
+        backgroundColor: ['#30363d', '#21262d'],
+        borderWidth: 0,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      rotation: -90,
+      cutout: '76%',
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 700, easing: 'easeInOutQuart' },
+      plugins: {
+        tooltip: { enabled: false },
+        legend:  { display: false },
+        centre:  { big: '—', small: '— / —' },
+      }
+    }
+  });
+}
+
+/* ── Sparkline charts ── */
+function mkSparkline(id) {
+  return new Chart($(id).getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [{
+        data: [],
+        borderColor: '#30363d',
+        borderWidth: 1.5,
+        backgroundColor: 'rgba(48,54,61,0.12)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 0,
+        spanGaps: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      scales: {
+        x: { display: false },
+        y: { display: false, min: 0, max: 100 },
+      },
+      plugins: {
+        legend:  { display: false },
+        tooltip: { enabled: false },
+      },
+      layout: { padding: 0 },
+    }
+  });
+}
+
+const gauges = { '5h': mkGauge('c5h'),       '7d': mkGauge('c7d') };
+const sparks = { '5h': mkSparkline('s5h'),   '7d': mkSparkline('s7d') };
+
+function setGauge(key, pct, big, small) {
+  const ch   = gauges[key];
+  const used = pct !== null ? Math.min(100, Math.max(0, pct)) : 0;
+  ch.data.datasets[0].data            = [used, 100 - used];
+  ch.data.datasets[0].backgroundColor = [arcColor(pct), '#21262d'];
+  ch.options.plugins.centre.big   = big;
+  ch.options.plugins.centre.small = small;
+  ch.update();
+}
+
+/* ── State ── */
+let resets   = { '5h': null, '7d': null };
+let lastPoll = null;
+let nextIn   = POLL;
+let busy     = false;
+
+/* ── Apply gauge data ── */
+function applyUsage(usage, serverErr) {
+  ['5h', '7d'].forEach(k => {
+    const rem  = toNum(usage[`anthropic-ratelimit-unified-${k}-remaining`]);
+    const lim  = toNum(usage[`anthropic-ratelimit-unified-${k}-limit`]);
+    const util = toNum(usage[`anthropic-ratelimit-unified-${k}-utilization`]);
+    const rst  = usage[`anthropic-ratelimit-unified-${k}-reset`] ?? null;
+
+    resets[k] = rst;
+
+    let pct = null, used = null;
+    if (lim !== null && rem !== null) {
+      used = lim - rem;
+      pct  = lim > 0 ? (used / lim) * 100 : 0;
+    } else if (util !== null) {
+      pct = util <= 1 ? util * 100 : util;
+    }
+
+    const big   = pct !== null ? pct.toFixed(1) + '%' : '—';
+    const small = (lim !== null && used !== null)
+      ? `${abbr(used)} / ${abbr(lim)}`
+      : rem !== null ? `${abbr(rem)} rem` : '— / —';
+
+    setGauge(k, pct, big, small);
+
+    // Color countdown text to match utilization level
+    $(`cd${k}`).style.color = pct !== null ? arcColor(pct) : '';
+
+    const eid    = `e${k.replace('-', '')}`;
+    const noData = pct === null;
+    $(eid).classList.toggle('show', noData);
+    if (noData) {
+      $(`${eid}-t`).textContent = serverErr ? 'API Error'            : 'No data';
+      $(`${eid}-d`).textContent = serverErr ? serverErr.slice(0, 90) : 'Header not returned by server';
+    }
+  });
+}
+
+/* ── Apply sparkline history ── */
+function applyHistory(history) {
+  const oneHourAgo = Date.now() - 3600 * 1000;
+  const recent = history.filter(e => new Date(e.ts).getTime() > oneHourAgo);
+
+  ['5h', '7d'].forEach(k => {
+    const field  = `pct_${k}`;
+    const pts    = recent.map(e => e[field]);
+    const latest = pts.filter(v => v !== null).at(-1) ?? null;
+    const ch     = sparks[k];
+    ch.data.labels                      = recent.map(e => e.ts);
+    ch.data.datasets[0].data            = pts;
+    ch.data.datasets[0].borderColor     = arcColor(latest);
+    ch.data.datasets[0].backgroundColor = arcColorAlpha(latest);
+    ch.update('none');
+  });
+}
+
+function errBoth(title, detail) {
+  ['5h', '7d'].forEach(k => {
+    const eid = `e${k.replace('-', '')}`;
+    $(eid).classList.add('show');
+    $(`${eid}-t`).textContent = title;
+    $(`${eid}-d`).textContent = detail.length > 90 ? detail.slice(0, 87) + '…' : detail;
+  });
+}
+
+function setStatus(state, text) {
+  $('sdot').className   = `dot ${state}`;
+  $('stxt').textContent = text;
+}
+
+/* ── Fetch cycle ── */
+async function doFetch() {
+  busy = true;
+  setStatus('busy', 'Fetching…');
+  $('spin').classList.add('on');
+  $('refresh-btn').disabled = true;
+
+  try {
+    const [uR, sR, hR] = await Promise.all([
+      fetchT(`${API}/api/usage`),
+      fetchT(`${API}/api/status`),
+      fetchT(`${API}/api/history`),
+    ]);
+    if (!uR.ok) throw new Error(`HTTP ${uR.status}`);
+
+    const [usage, status, history] = await Promise.all([
+      uR.json(), sR.json(), hR.json(),
+    ]);
+
+    lastPoll = status.last_poll ? new Date(status.last_poll) : new Date();
+    applyUsage(usage, status.last_error || null);
+    applyHistory(history);
+    setStatus(
+      status.last_error ? 'error' : 'ok',
+      status.last_error ? `API error: ${status.last_error}` : 'Connected'
+    );
+  } catch (err) {
+    const msg = (err.name === 'AbortError' || /fetch|network/i.test(String(err)))
+      ? 'Server unreachable — is server.py running?'
+      : err.message;
+    setStatus('error', msg);
+    errBoth('Server unreachable', msg);
+  } finally {
+    busy  = false;
+    nextIn = POLL;
+    $('spin').classList.remove('on');
+    $('refresh-btn').disabled = false;
+  }
+}
+
+function manualRefresh() {
+  if (!busy) doFetch();
+}
+
+/* ── 1-second tick ── */
+setInterval(() => {
+  $('cd5h').textContent = fmtCountdown(resets['5h']);
+  $('cd7d').textContent = fmtCountdown(resets['7d']);
+
+  if (lastPoll) {
+    const ago = Math.floor((Date.now() - lastPoll.getTime()) / 1000);
+    $('sago').textContent = ago < 5 ? 'Just updated' : `Updated ${ago}s ago`;
+  }
+
+  if (!busy) {
+    nextIn = Math.max(0, nextIn - 1);
+    $('snext').textContent = nextIn > 0 ? `Refresh in ${nextIn}s` : 'Refreshing…';
+  }
+}, 1000);
+
+/* ── Polling loop ── */
+(async function loop() {
+  await doFetch();
+  const hasData = Object.values(resets).some(Boolean);
+  setTimeout(loop, hasData ? POLL * 1000 : 5000);
+})();
+</script>
+</body>
+</html>

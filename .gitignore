@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Build output
+dist/
+*.zip
+
+# Runtime
+nohup.out
+/tmp/
+config.json
+
+# Editor
+.vscode/
+.idea/
+*.swp
