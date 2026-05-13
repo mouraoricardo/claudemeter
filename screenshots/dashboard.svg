@@ -1,0 +1,73 @@
+<svg width="800" height="510" viewBox="0 0 800 510" xmlns="http://www.w3.org/2000/svg"
+     font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+
+  <!-- Background -->
+  <rect width="800" height="510" fill="#0d1117"/>
+
+  <!-- ── Header ── -->
+  <rect width="800" height="50" fill="#161b22"/>
+  <line x1="0" y1="50" x2="800" y2="50" stroke="#30363d" stroke-width="1"/>
+  <text x="28" y="32" font-size="17" font-weight="700" fill="#e6edf3">ClaudeMeter</text>
+  <text x="142" y="32" font-size="12" fill="#8b949e">Claude Code API usage monitor</text>
+
+  <!-- ── Card 1: 5h Session (50 %, amber) ── -->
+  <rect x="60" y="65" width="330" height="390" rx="14" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="80" y="95" font-size="10" font-weight="700" fill="#8b949e" letter-spacing="1">5H SESSION</text>
+
+  <!-- Gauge track -->
+  <circle cx="225" cy="190" r="76" fill="none" stroke="#21262d" stroke-width="22"/>
+  <!-- Arc: 50 % of 2π×76 = 477.52 → 238.76 -->
+  <circle cx="225" cy="190" r="76" fill="none" stroke="#d29922" stroke-width="22"
+          stroke-dasharray="238.76 238.76" stroke-linecap="round"
+          transform="rotate(-90 225 190)"/>
+  <text x="225" y="182" font-size="26" font-weight="700" fill="#e6edf3" text-anchor="middle">50.0%</text>
+  <text x="225" y="204" font-size="12" fill="#8b949e" text-anchor="middle">— / —</text>
+
+  <!-- Reset -->
+  <text x="225" y="298" font-size="10" font-weight="600" fill="#8b949e" text-anchor="middle" letter-spacing="0.7">RESETS IN</text>
+  <text x="225" y="321" font-size="20" font-weight="500" fill="#d29922" text-anchor="middle">3h 31m</text>
+
+  <!-- Sparkline (upward trend) -->
+  <text x="80" y="344" font-size="9" font-weight="600" fill="#8b949e" letter-spacing="0.7" opacity="0.7">1H TREND</text>
+  <polygon points="80,393 80,384 109,383 138,381 167,380 196,379 225,378 254,377 283,375 312,374 341,374 370,374 370,393"
+           fill="#d29922" opacity="0.12"/>
+  <polyline points="80,384 109,383 138,381 167,380 196,379 225,378 254,377 283,375 312,374 341,374 370,374"
+            fill="none" stroke="#d29922" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- ── Card 2: 7 Day (17 %, green) ── -->
+  <rect x="410" y="65" width="330" height="390" rx="14" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="430" y="95" font-size="10" font-weight="700" fill="#8b949e" letter-spacing="1">7 DAY</text>
+
+  <!-- Gauge track -->
+  <circle cx="575" cy="190" r="76" fill="none" stroke="#21262d" stroke-width="22"/>
+  <!-- Arc: 17 % → 81.18 -->
+  <circle cx="575" cy="190" r="76" fill="none" stroke="#3fb950" stroke-width="22"
+          stroke-dasharray="81.18 396.34" stroke-linecap="round"
+          transform="rotate(-90 575 190)"/>
+  <text x="575" y="182" font-size="26" font-weight="700" fill="#e6edf3" text-anchor="middle">17.0%</text>
+  <text x="575" y="204" font-size="12" fill="#8b949e" text-anchor="middle">— / —</text>
+
+  <!-- Reset -->
+  <text x="575" y="298" font-size="10" font-weight="600" fill="#8b949e" text-anchor="middle" letter-spacing="0.7">RESETS IN</text>
+  <text x="575" y="321" font-size="20" font-weight="500" fill="#3fb950" text-anchor="middle">5d 3h</text>
+
+  <!-- Sparkline (gentle upward) -->
+  <text x="430" y="344" font-size="9" font-weight="600" fill="#8b949e" letter-spacing="0.7" opacity="0.7">1H TREND</text>
+  <polygon points="430,393 430,391 459,390 488,390 517,389 546,389 575,388 604,388 633,388 662,387 691,387 720,387 720,393"
+           fill="#3fb950" opacity="0.12"/>
+  <polyline points="430,391 459,390 488,390 517,389 546,389 575,388 604,388 633,388 662,387 691,387 720,387"
+            fill="none" stroke="#3fb950" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- ── Footer ── -->
+  <line x1="0" y1="470" x2="800" y2="470" stroke="#30363d" stroke-width="1"/>
+  <circle cx="36" cy="490" r="3.5" fill="#3fb950"/>
+  <text x="48" y="494" font-size="12" fill="#8b949e">Connected</text>
+  <rect x="132" y="479" width="84" height="22" rx="5" fill="none" stroke="#30363d" stroke-width="1"/>
+  <text x="174" y="494" font-size="11" fill="#8b949e" text-anchor="middle">Refresh now</text>
+  <text x="562" y="494" font-size="12" fill="#8b949e">Updated 18s ago</text>
+  <text x="670" y="494" font-size="12" fill="#30363d">|</text>
+  <circle cx="685" cy="490" r="5.5" fill="none" stroke="#30363d" stroke-width="2"/>
+  <path d="M 685 484.5 A 5.5 5.5 0 0 1 690.5 490" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round"/>
+  <text x="700" y="494" font-size="12" fill="#8b949e">Refresh in 42s</text>
+
+</svg>

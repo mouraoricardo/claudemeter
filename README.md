@@ -24,7 +24,9 @@ The server runs entirely on your machine — your credentials never leave it.
 
 ## Screenshots
 
-> *Coming soon — contributions welcome.*
+![ClaudeMeter dashboard — normal state](screenshots/dashboard.svg)
+
+![ClaudeMeter dashboard — warning state](screenshots/dashboard-warning.svg)
 
 ---
 
